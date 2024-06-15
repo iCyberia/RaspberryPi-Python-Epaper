@@ -29,14 +29,14 @@ import logging
 from waveshare_epd import epd3in7
 import time
 from PIL import Image,ImageDraw,ImageFont
-import traceback
-import psutil
+import psutil # type: ignore
 import datetime
 import socket
 import requests
 import random
-import textwrap  # Ensure textwrap is imported
+import textwrap
 
+# Debug logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Declaring fonts
@@ -63,7 +63,7 @@ def get_hostname():
     except Exception as e:
         logging.error(f"An error occurred while getting the hostname: {e}")
         return None    
-
+    
 
 # Gets wifi name
 def get_wifi_name():
@@ -102,7 +102,7 @@ try:
         posts = data['data']['children']
         # Select a random post
         random_post = random.choice(posts)['data']
-        shower_thought = f'{random_post["title"]}\n-{random_post["author"]}'
+        shower_thought = f'{random_post["title"]} -{random_post["author"]}'
 # Error handling
 except requests.ConnectionError as e:
     logging.error(f"Connection error: {e}")
@@ -121,6 +121,13 @@ if wifi_name:
 else:
     networkName = "Could not determine the Wi-Fi name."
 
+# Sets the hostname
+hostname = get_hostname()
+if hostname:
+    print(f"Hostname: {hostname}")
+else:
+    print("Could not determine the hostname.")
+
 # Sets uptime variable
 uptime = get_system_uptime()
 
@@ -132,8 +139,8 @@ try:
     epd.init(0)
     epd.Clear(0xFF, 0)  # clear the display
 
-    def print_to_display(network_name, uptime_info, shower_thought):
-
+    # write to display buffer
+    def print_to_display(network_name, uptime_info, shower_thought, hostname):
         Limage = Image.new('L', (epd.width, epd.height), 0xFF)  # clear for new print
         draw = ImageDraw.Draw(Limage)
         draw.text((10, 10), network_name, font=font24, fill=0)
@@ -146,17 +153,26 @@ try:
         for line in wrapped_thought_lines:
             draw.text((10, y_text), line, font=font24, fill=0)
             y_text += font24.getsize(line)[1]
+
         # Write current time to buffer
         draw.text((10, 400), time.strftime('%I:%M %p'), font=font48, fill=0)
+
+        # Write Hostname to buffer
+        draw.text((10, 450), hostname, font=font24, fill=0)
+
+        # Push buffer to screen
         epd.display_4Gray(epd.getbuffer_4Gray(Limage))
 
+        # Put the display to sleep
         logging.info("Goto Sleep...")
         epd.sleep()
         
 # Run 
     logging.info("Print Network and Uptime")
-    print_to_display(networkName, uptime, shower_thought)  
+    print_to_display(networkName, uptime, shower_thought, hostname)  
   
+
+
 # Error handling
 except IOError as e:
     logging.error(e)
