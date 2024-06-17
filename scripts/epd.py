@@ -160,6 +160,10 @@ try:
         # Write Hostname to buffer
         draw.text((10, 450), hostname, font=font24, fill=0)
 
+
+
+
+
         # Push buffer to screen
         epd.display_4Gray(epd.getbuffer_4Gray(Limage))
 
