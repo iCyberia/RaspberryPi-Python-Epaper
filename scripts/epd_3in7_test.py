@@ -80,7 +80,7 @@ try:
     epd.display_4Gray(epd.getbuffer_4Gray(Limage))
     time.sleep(5)
 
-    # partial update, just 1 Gary mode
+    # partial update, just 1 Gray mode
     logging.info("5.show time, partial update, just 1 Gary mode")
     epd.init(1)         # 1 Gary mode
     epd.Clear(0xFF, 1)

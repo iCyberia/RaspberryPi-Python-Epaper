@@ -130,14 +130,14 @@ else:
 
 # Sets uptime variable
 uptime = get_system_uptime()
-
+num = 0
 
 # Display write
 try:
     logging.info("Init and Clear")
     epd = epd3in7.EPD()  # get the display
     epd.init(0)
-    epd.Clear(0xFF, 0)  # clear the display
+    # epd.Clear(0xFF, 0)  # clear the display
 
     # write to display buffer
     def print_to_display(network_name, uptime_info, shower_thought, hostname):
@@ -145,38 +145,38 @@ try:
         draw = ImageDraw.Draw(Limage)
         draw.text((10, 10), network_name, font=font24, fill=0)
         draw.text((10, 75), f"Uptime: \n{uptime_info}", font=font24, fill=0)
+        draw.text((10, 450), hostname, font=font24, fill=0)# Write Hostname to buffer
 
         # Word wrap the thought to buffer
         max_chars_per_line = 23  # Adjust width as needed
         wrapped_thought_lines = textwrap.wrap(shower_thought, width=max_chars_per_line)
         y_text = 140
+
+        # Push buffer to screen
         for line in wrapped_thought_lines:
             draw.text((10, y_text), line, font=font24, fill=0)
             y_text += font24.getsize(line)[1]
-
-        # Write current time to buffer
-        draw.text((10, 400), time.strftime('%I:%M %p'), font=font48, fill=0)
-
-        # Write Hostname to buffer
-        draw.text((10, 450), hostname, font=font24, fill=0)
-
-
-
-
-
-        # Push buffer to screen
         epd.display_4Gray(epd.getbuffer_4Gray(Limage))
 
-        # Put the display to sleep
-        logging.info("Goto Sleep...")
-        epd.sleep()
+
         
 # Run 
     logging.info("Print Network and Uptime")
     print_to_display(networkName, uptime, shower_thought, hostname)  
-  
-
-
+    # partial update, just 1 Gray mode
+    epd.init(1)         # 1 Gary mode
+    epd.Clear(0xFF, 1)
+    time_image = Image.new('1', (epd.width, epd.height), 255)
+    time_draw = ImageDraw.Draw(time_image)
+    
+    while (True):
+        time_draw.rectangle((100, 400, 200, 448), fill = 255)
+        time_draw.text((10, 400), time.strftime('%I:%M %p'), font=font48, fill=0)
+        epd.display_1Gray(epd.getbuffer(time_image))
+        num = num + 1
+        if(num == 600):
+            break
+    
 # Error handling
 except IOError as e:
     logging.error(e)
@@ -185,7 +185,8 @@ except KeyboardInterrupt:
     logging.info("ctrl + c:")
     epd3in7.epdconfig.module_exit(cleanup=True)
     exit()
-
+logging.info("Goto Sleep...")
+epd.sleep()
     # #Display Elder Emo Test Badge
     # epd.init(0)
     # epd.Clear(0xFF, 0)
